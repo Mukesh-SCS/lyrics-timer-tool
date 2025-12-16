@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lyrics Capture Tool</title>
+    <link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 Lyrics Capture Tool</h1>
+        <p class="subtitle">Fast, keyboard-driven lyric timing for your music player</p>
+
+        <div class="audio-section">
+            <label for="audioFile" class="dropzone">
+                <div style="text-align: center;">
+                    <div style="font-size: 2rem; margin-bottom: 8px;">🎵</div>
+                    <div style="font-weight: 600; margin-bottom: 4px;">Drop MP3 here or click to upload</div>
+                    <div style="font-size: 0.9rem; color: #6b7280;">MP3, WAV, or any audio format</div>
+                </div>
+                <input type="file" id="audioFile" accept="audio/*" style="display: none;">
+            </label>
+            <audio id="audioPlayer" controls style="margin-top: 15px;"></audio>
+        </div>
+
+        <div class="capture-section">
+            <div style="display: flex; gap: 15px; margin-bottom: 18px; align-items: center;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 1rem; color: #4f46e5;">
+                    <input type="checkbox" id="blindMode" style="width: 18px; height: 18px; cursor: pointer;">
+                    <span>🎯 Blind Mode</span>
+                </label>
+            </div>
+            <div class="input-wrapper" id="inputContainer">
+                <input 
+                    type="text" 
+                    id="lyricInput" 
+                    placeholder="Type lyric and press Enter..." 
+                    autocomplete="off"
+                    spellcheck="false"
+                >
+                <div class="time-badge" id="timeBadge" title="Click to play/pause">0.0s</div>
+            </div>
+            <div class="hint">
+                <div style="display: flex; gap: 20px; margin-bottom: 8px;">
+                    <div style="display: flex; gap: 6px; align-items: center;"><div class="shortcut-chip">[Enter]</div> <span style="font-size: 0.9rem;">Capture</span></div>
+                    <div style="display: flex; gap: 6px; align-items: center;"><div class="shortcut-chip">[Space]</div> <span style="font-size: 0.9rem;">Play/Pause</span></div>
+                </div>
+                <div style="display: flex; gap: 20px;">
+                    <div style="display: flex; gap: 6px; align-items: center;"><div class="shortcut-chip">[Ctrl+Z]</div> <span style="font-size: 0.9rem;">Undo</span></div>
+                    <div style="display: flex; gap: 6px; align-items: center;"><div class="shortcut-chip">[Alt+←/→]</div> <span style="font-size: 0.9rem;">Nudge</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="captured-list" id="capturedList">
+            <div class="empty-state">
+                <div style="font-size: 1.1rem; font-weight: 500; margin-bottom: 20px;">Get started</div>
+                <div style="display: flex; flex-direction: column; gap: 12px; font-size: 1rem; color: #6b7280;">
+                    <div>Play the song</div>
+                    <div>Type a lyric</div>
+                    <div>Press Enter at the right moment</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="actions-bar">
+            <button class="btn-primary" id="btnJSON">📋 JSON</button>
+            <button class="btn-primary" id="btnLRC">🎤 LRC</button>
+            <button class="btn-primary" id="btnSRT">🎬 SRT</button>
+            <button class="btn-secondary" id="btnUndo">↶ Undo</button>
+            <div style="position: relative;">
+                <button class="btn-danger" id="btnClearToggle" style="cursor: pointer;">⋮ More</button>
+                <div id="moreMenu" style="display: none; position: absolute; right: 0; top: 100%; background: white; border: 1px solid #e5e7eb; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 10; min-width: 150px;">
+                    <button id="btnClear" style="width: 100%; text-align: left; padding: 12px 16px; border: none; background: none; cursor: pointer; color: #ef4444; font-weight: 500; border-radius: 0;">🗑️ Clear all</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="status">
+            <span id="statusText">Lines captured: 0</span>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script type="module" src="/src/script.js"></script>
+</body>
+</html>

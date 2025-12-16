@@ -1,0 +1,23 @@
+{
+  "name": "lyrics-capture-tool",
+  "version": "1.0.0",
+  "description": "Fast, keyboard-driven lyric timestamping for music players",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [
+    "lyrics",
+    "timing",
+    "music",
+    "tool",
+    "capture"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "vite": "^5.0.0"
+  }
+}
