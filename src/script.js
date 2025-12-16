@@ -7,6 +7,8 @@ const statusText = document.getElementById('statusText');
 const toast = document.getElementById('toast');
 const blindMode = document.getElementById('blindMode');
 const inputContainer = document.getElementById('inputContainer');
+const searchInput = document.getElementById('searchInput');
+const btnSearch = document.getElementById('btnSearch');
 
 let entries = [];
 let lastCaptureTime = null;
@@ -22,6 +24,14 @@ document.getElementById('btnLRC').addEventListener('click', exportLRC);
 document.getElementById('btnSRT').addEventListener('click', exportSRT);
 document.getElementById('btnUndo').addEventListener('click', undoLast);
 document.getElementById('btnClear').addEventListener('click', safeClearAll);
+btnSearch.addEventListener('click', searchLyrics);
+
+// Search on Enter key
+searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        searchLyrics();
+    }
+});
 
 // More menu dropdown
 const btnClearToggle = document.getElementById('btnClearToggle');
@@ -533,6 +543,19 @@ function clearAll() {
 
 function safeClearAll() {
     clearAll();
+}
+
+function searchLyrics() {
+    const query = searchInput.value.trim();
+    if (!query) {
+        showToast('⚠️ Enter a song name to search', 'warning');
+        return;
+    }
+    
+    const searchQuery = encodeURIComponent(query + ' lyrics');
+    const searchUrl = `https://www.google.com/search?q=${searchQuery}`;
+    window.open(searchUrl, '_blank');
+    showToast('🔍 Opening search in new tab');
 }
 
 function showToast(message, type = 'success') {
