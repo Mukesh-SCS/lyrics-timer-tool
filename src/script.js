@@ -321,18 +321,19 @@ function escapeHtml(text) {
 }
 
 function copyJSON() {
+    console.log('copyJSON called, entries:', entries);
     if (entries.length === 0) {
-        showToast('⚠️ No lyrics to copy', 'warning');
+        showToast('⚠️ No lyrics to export', 'warning');
         return;
     }
 
     const json = JSON.stringify(entries, null, 2);
-    navigator.clipboard.writeText(json).then(() => {
-        showToast('✅ JSON copied to clipboard');
-    });
+    downloadFile(json, 'lyrics.json', 'application/json');
+    showToast('✅ JSON file downloaded');
 }
 
 function exportLRC() {
+    console.log('exportLRC called, entries:', entries);
     if (entries.length === 0) {
         showToast('⚠️ No lyrics to export', 'warning');
         return;
@@ -345,12 +346,12 @@ function exportLRC() {
         lrc += `[${minutes}:${seconds.padStart(5, '0')}]${entry.text}\n`;
     });
 
-    navigator.clipboard.writeText(lrc).then(() => {
-        showToast('✅ LRC format copied');
-    });
+    downloadFile(lrc, 'lyrics.lrc', 'text/plain');
+    showToast('✅ LRC file downloaded');
 }
 
 function exportSRT() {
+    console.log('exportSRT called, entries:', entries);
     if (entries.length === 0) {
         showToast('⚠️ No lyrics to export', 'warning');
         return;
@@ -363,9 +364,20 @@ function exportSRT() {
         srt += `${i + 1}\n${startTime} --> ${endTime}\n${entry.text}\n\n`;
     });
 
-    navigator.clipboard.writeText(srt).then(() => {
-        showToast('✅ SRT format copied');
-    });
+    downloadFile(srt, 'lyrics.srt', 'text/plain');
+    showToast('✅ SRT file downloaded');
+}
+
+function downloadFile(content, filename, mimeType) {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
 }
 
 function formatSrtTime(seconds) {
