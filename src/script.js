@@ -12,57 +12,54 @@ let entries = [];
 let lastCaptureTime = null;
 let editingIndex = null;
 
-// Initialize after DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-    // Auto-focus input
-    lyricInput.focus();
-    
-    // Button event listeners
-    document.getElementById('btnJSON').addEventListener('click', copyJSON);
-    document.getElementById('btnLRC').addEventListener('click', exportLRC);
-    document.getElementById('btnSRT').addEventListener('click', exportSRT);
-    document.getElementById('btnUndo').addEventListener('click', undoLast);
-    document.getElementById('btnClear').addEventListener('click', safeClearAll);
+// Auto-focus input
+lyricInput.focus();
 
-    // More menu dropdown
-    const btnClearToggle = document.getElementById('btnClearToggle');
-    const moreMenu = document.getElementById('moreMenu');
+// Button event listeners
+document.getElementById('btnJSON').addEventListener('click', copyJSON);
+document.getElementById('btnLRC').addEventListener('click', exportLRC);
+document.getElementById('btnSRT').addEventListener('click', exportSRT);
+document.getElementById('btnUndo').addEventListener('click', undoLast);
+document.getElementById('btnClear').addEventListener('click', safeClearAll);
 
-    btnClearToggle.addEventListener('click', (e) => {
-        e.stopPropagation();
-        moreMenu.style.display = moreMenu.style.display === 'none' ? 'block' : 'none';
+// More menu dropdown
+const btnClearToggle = document.getElementById('btnClearToggle');
+const moreMenu = document.getElementById('moreMenu');
+
+btnClearToggle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    moreMenu.style.display = moreMenu.style.display === 'none' ? 'block' : 'none';
+});
+
+document.addEventListener('click', () => {
+    moreMenu.style.display = 'none';
+});
+
+// Drag and drop for audio file
+const dropzone = document.querySelector('.dropzone');
+
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    dropzone.addEventListener(eventName, preventDefaults, false);
+});
+
+['dragenter', 'dragover'].forEach(eventName => {
+    dropzone.addEventListener(eventName, () => {
+        dropzone.classList.add('drag-over');
     });
+});
 
-    document.addEventListener('click', () => {
-        moreMenu.style.display = 'none';
+['dragleave', 'drop'].forEach(eventName => {
+    dropzone.addEventListener(eventName, () => {
+        dropzone.classList.remove('drag-over');
     });
+});
 
-    // Drag and drop for audio file
-    const dropzone = document.querySelector('.dropzone');
-
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        dropzone.addEventListener(eventName, preventDefaults, false);
-    });
-
-    ['dragenter', 'dragover'].forEach(eventName => {
-        dropzone.addEventListener(eventName, () => {
-            dropzone.classList.add('drag-over');
-        });
-    });
-
-    ['dragleave', 'drop'].forEach(eventName => {
-        dropzone.addEventListener(eventName, () => {
-            dropzone.classList.remove('drag-over');
-        });
-    });
-
-    dropzone.addEventListener('drop', (e) => {
-        const dt = e.dataTransfer;
-        const files = dt.files;
-        audioFile.files = files;
-        const event = new Event('change', { bubbles: true });
-        audioFile.dispatchEvent(event);
-    });
+dropzone.addEventListener('drop', (e) => {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    audioFile.files = files;
+    const event = new Event('change', { bubbles: true });
+    audioFile.dispatchEvent(event);
 });
 
 function preventDefaults(e) {
