@@ -11,6 +11,7 @@ const inputContainer = document.getElementById('inputContainer');
 let entries = [];
 let lastCaptureTime = null;
 let editingIndex = null;
+let stagedLines = []; // For multi-line paste staging
 
 // Auto-focus input
 lyricInput.focus();
@@ -108,6 +109,24 @@ audioPlayer.addEventListener('timeupdate', () => {
     timeBadge.textContent = time + 's';
 });
 
+// Handle paste events for multi-line lyrics
+lyricInput.addEventListener('paste', (e) => {
+    e.preventDefault();
+    const pastedText = e.clipboardData.getData('text');
+    const lines = pastedText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+    
+    if (lines.length > 1) {
+        // Multi-line paste: stage all lines
+        stagedLines = lines.map(text => ({ time: 0.00, text }));
+        lyricInput.value = '';
+        updateList();
+        showToast(`📋 ${lines.length} lines staged. Click Add to capture timing.`);
+    } else if (lines.length === 1) {
+        // Single line: just set the input value
+        lyricInput.value = lines[0];
+    }
+});
+
 // Keyboard controls
 lyricInput.addEventListener('keydown', (e) => {
     // Space to play/pause ONLY if input is empty (before typing)
@@ -127,6 +146,8 @@ lyricInput.addEventListener('keydown', (e) => {
     // Escape to clear input
     if (e.key === 'Escape') {
         lyricInput.value = '';
+        stagedLines = [];
+        updateList();
     }
 });
 
@@ -217,6 +238,35 @@ function nudgeTiming(delta) {
 }
 
 function updateList() {
+    // Show staged lines if they exist
+    if (stagedLines.length > 0) {
+        capturedList.classList.remove('empty');
+        capturedList.innerHTML = `
+            <div style="background: #fef3c7; padding: 12px 20px; border-radius: 8px; margin-bottom: 12px; font-weight: 500; color: #92400e;">
+                📋 Staged Lines - Click Add to capture timing
+            </div>
+            ${stagedLines.map((line, i) => `
+                <div class="captured-item" style="background: #fffbeb;">
+                    <div class="item-number">${i + 1}</div>
+                    <div class="item-time" style="color: #9ca3af;">0.00s</div>
+                    <div class="item-text" style="flex: 1;">${escapeHtml(line.text)}</div>
+                    <button class="add-staged-btn" style="padding: 6px 16px; font-size: 0.9rem; cursor: pointer; background: #10b981; color: white; border: none; border-radius: 6px; font-weight: 500; transition: all 0.2s;" data-add="${i}">Add</button>
+                    <button class="delete-btn" style="padding: 4px 8px; font-size: 0.9rem; cursor: pointer; color: #9ca3af; border: none; background: none; border-radius: 4px; transition: all 0.2s; margin-left: 8px;" data-remove-staged="${i}">✕</button>
+                </div>
+            `).join('')}
+        ` + (entries.length > 0 ? `<div style="border-top: 2px solid #e5e7eb; margin: 20px 0;"></div>` : '');
+        
+        // Add captured entries below if they exist
+        if (entries.length > 0) {
+            capturedList.innerHTML += renderCapturedEntries();
+        }
+        
+        // Attach event listeners for staged lines
+        attachStagedLineListeners();
+        attachCapturedListeners();
+        return;
+    }
+    
     if (entries.length === 0) {
         capturedList.classList.add('empty');
         capturedList.innerHTML = `
@@ -233,10 +283,15 @@ function updateList() {
     }
 
     capturedList.classList.remove('empty');
+    capturedList.innerHTML = renderCapturedEntries();
+    attachCapturedListeners();
+}
+
+function renderCapturedEntries() {
 
     if (blindMode.checked) {
         // Blind Mode: Show only timestamps
-        capturedList.innerHTML = `
+        return `
             <div class="blind-mode-indicator">Timing only mode enabled</div>
             ${entries.map((entry, i) => `
                 <div class="captured-item" style="padding: 12px 20px;">
@@ -249,7 +304,7 @@ function updateList() {
         `;
     } else {
         // Normal Mode: Show lyrics
-        capturedList.innerHTML = entries.map((entry, i) => `
+        return entries.map((entry, i) => `
             <div class="captured-item" style="${editingIndex === i ? 'background: #fef3c7;' : ''}">
                 <div class="item-number">${i + 1}</div>
                 <div class="item-time" style="cursor: pointer;" data-time="${entry.time}">${entry.time}s</div>
@@ -258,7 +313,9 @@ function updateList() {
             </div>
         `).join('');
     }
-    
+}
+
+function attachCapturedListeners() {
     // Attach event listeners after HTML is rendered
     document.querySelectorAll('.item-text').forEach(el => {
         el.addEventListener('click', (e) => {
@@ -280,6 +337,64 @@ function updateList() {
             deleteEntry(index);
         });
     });
+}
+
+function attachStagedLineListeners() {
+    document.querySelectorAll('.add-staged-btn').forEach(el => {
+        el.addEventListener('click', (e) => {
+            const index = parseInt(el.getAttribute('data-add'));
+            addStagedLine(index);
+        });
+    });
+    
+    document.querySelectorAll('[data-remove-staged]').forEach(el => {
+        el.addEventListener('click', (e) => {
+            const index = parseInt(el.getAttribute('data-remove-staged'));
+            removeStagedLine(index);
+        });
+    });
+}
+
+function addStagedLine(index) {
+    if (index < 0 || index >= stagedLines.length) return;
+    
+    const time = parseFloat(audioPlayer.currentTime.toFixed(1));
+    const text = stagedLines[index].text;
+    
+    let deltaText = '';
+    if (lastCaptureTime !== null) {
+        const delta = (time - lastCaptureTime).toFixed(1);
+        deltaText = ` (Δ ${delta}s)`;
+    }
+    
+    entries.push({ time, text });
+    lastCaptureTime = time;
+    entries.sort((a, b) => a.time - b.time);
+    
+    // Remove the staged line
+    stagedLines.splice(index, 1);
+    
+    // Trigger animation on timestamp badge
+    timeBadge.classList.remove('captured');
+    void timeBadge.offsetWidth;
+    timeBadge.classList.add('captured');
+    
+    showToast(`✓ Captured @ ${time}s${deltaText}`);
+    updateList();
+    updateStatus();
+    lyricInput.focus();
+}
+
+function removeStagedLine(index) {
+    if (index < 0 || index >= stagedLines.length) return;
+    stagedLines.splice(index, 1);
+    
+    if (stagedLines.length === 0) {
+        showToast('🗑️ All staged lines removed');
+    }
+    
+    updateList();
+    lyricInput.focus();
 }
 
 function startEdit(index) {
