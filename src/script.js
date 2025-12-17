@@ -10,10 +10,27 @@ const inputContainer = document.getElementById('inputContainer');
 const searchInput = document.getElementById('searchInput');
 const btnSearch = document.getElementById('btnSearch');
 
+// Player mode elements
+const captureMode = document.getElementById('captureMode');
+const playerMode = document.getElementById('playerMode');
+const modeTabs = document.querySelectorAll('.mode-tab');
+const jsonUpload = document.getElementById('jsonUpload');
+const playerAudioFile = document.getElementById('playerAudioFile');
+const playerAudio = document.getElementById('playerAudio');
+const lyricsDisplay = document.getElementById('lyricsDisplay');
+const playerSongTitle = document.getElementById('playerSongTitle');
+const playerArtistName = document.getElementById('playerArtistName');
+const songTitleInput = document.getElementById('songTitleInput');
+const artistNameInput = document.getElementById('artistNameInput');
+
 let entries = [];
 let lastCaptureTime = null;
 let editingIndex = null;
 let stagedLines = []; // For multi-line paste staging
+
+// Player mode data
+let playerLyrics = [];
+let currentLyricIndex = -1;
 
 // Auto-focus input
 lyricInput.focus();
@@ -163,8 +180,10 @@ lyricInput.addEventListener('keydown', (e) => {
 
 // Global keyboard shortcuts
 document.addEventListener('keydown', (e) => {
-    // Spacebar to play/pause (when not typing in input)
-    if (e.code === 'Space' && document.activeElement !== lyricInput) {
+    // Spacebar to play/pause (when not typing in any input field)
+    const isTypingInInput = document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA';
+    
+    if (e.code === 'Space' && !isTypingInInput) {
         e.preventDefault();
         if (audioPlayer.paused) {
             audioPlayer.play();
@@ -583,4 +602,136 @@ if (window.innerWidth > 768) {
             lyricInput.focus();
         }
     }, 150);
+}
+
+// ============================================
+// PLAYER MODE FUNCTIONALITY
+// ============================================
+
+// Mode tab switching
+modeTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+        const mode = tab.getAttribute('data-mode');
+        
+        modeTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        
+        if (mode === 'capture') {
+            captureMode.style.display = 'block';
+            playerMode.style.display = 'none';
+        } else {
+            captureMode.style.display = 'none';
+            playerMode.style.display = 'block';
+        }
+    });
+});
+
+// JSON file upload for player
+jsonUpload.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const data = JSON.parse(event.target.result);
+                if (Array.isArray(data) && data.length > 0) {
+                    playerLyrics = data.sort((a, b) => a.time - b.time);
+                    renderPlayerLyrics();
+                    showToast(`✅ Loaded ${playerLyrics.length} lyrics`);
+                } else {
+                    showToast('⚠️ Invalid JSON format', 'warning');
+                }
+            } catch (err) {
+                showToast('⚠️ Error parsing JSON file', 'warning');
+            }
+        };
+        reader.readAsText(file);
+    }
+});
+
+// Audio file upload for player
+playerAudioFile.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        const url = URL.createObjectURL(file);
+        playerAudio.src = url;
+        playerAudio.load();
+        showToast('🎵 Audio loaded for player!');
+    }
+});
+
+// Song title and artist name inputs
+songTitleInput.addEventListener('input', (e) => {
+    playerSongTitle.textContent = e.target.value || 'Song Title';
+});
+
+artistNameInput.addEventListener('input', (e) => {
+    playerArtistName.textContent = e.target.value || 'Artist Name';
+});
+
+// Player audio time update - sync lyrics
+playerAudio.addEventListener('timeupdate', () => {
+    const currentTime = playerAudio.currentTime;
+    updateActiveLyric(currentTime);
+});
+
+function renderPlayerLyrics() {
+    if (playerLyrics.length === 0) {
+        lyricsDisplay.innerHTML = `
+            <div class="lyrics-placeholder">
+                <div style="font-size: 2rem; margin-bottom: 12px;">🎶</div>
+                <div>Upload a JSON file and audio to see synced lyrics</div>
+            </div>
+        `;
+        return;
+    }
+    
+    lyricsDisplay.innerHTML = playerLyrics.map((lyric, i) => `
+        <div class="lyric-line upcoming" data-index="${i}" data-time="${lyric.time}">
+            ${escapeHtml(lyric.text)}
+        </div>
+    `).join('');
+    
+    // Add click to seek functionality
+    document.querySelectorAll('.lyric-line').forEach(el => {
+        el.addEventListener('click', () => {
+            const time = parseFloat(el.getAttribute('data-time'));
+            playerAudio.currentTime = time;
+            playerAudio.play();
+        });
+    });
+}
+
+function updateActiveLyric(currentTime) {
+    if (playerLyrics.length === 0) return;
+    
+    let activeIndex = -1;
+    
+    // Find the current lyric based on time
+    for (let i = playerLyrics.length - 1; i >= 0; i--) {
+        if (currentTime >= playerLyrics[i].time) {
+            activeIndex = i;
+            break;
+        }
+    }
+    
+    // Only update if changed
+    if (activeIndex !== currentLyricIndex) {
+        currentLyricIndex = activeIndex;
+        
+        const lines = document.querySelectorAll('.lyric-line');
+        lines.forEach((line, i) => {
+            line.classList.remove('active', 'past', 'upcoming');
+            
+            if (i < activeIndex) {
+                line.classList.add('past');
+            } else if (i === activeIndex) {
+                line.classList.add('active');
+                // Scroll to active lyric
+                line.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+                line.classList.add('upcoming');
+            }
+        });
+    }
 }

@@ -7,7 +7,14 @@
     <link rel="stylesheet" href="/src/style.css">
 </head>
 <body>
-    <div class="container">
+    <!-- Mode Toggle Tabs -->
+    <div class="mode-tabs">
+        <button class="mode-tab active" data-mode="capture">🎤 Lyric Timer</button>
+        <button class="mode-tab" data-mode="player">🎧 Song Player</button>
+    </div>
+
+    <!-- CAPTURE MODE -->
+    <div class="container" id="captureMode">
         <h1>🎵 Lyrics Capture Tool</h1>
         <p class="subtitle">Fast, keyboard-driven lyric timing for your music player</p>
 
@@ -91,6 +98,43 @@
 
         <div class="status">
             <span id="statusText">Lines captured: 0</span>
+        </div>
+    </div>
+
+    <!-- PLAYER MODE -->
+    <div class="container player-container" id="playerMode" style="display: none;">
+        <div class="player-header">
+            <div class="music-icon">🎵</div>
+            <h1 class="song-title" id="playerSongTitle">Song Title</h1>
+            <p class="artist-name" id="playerArtistName">Artist Name</p>
+        </div>
+
+        <div class="player-upload-section">
+            <div class="upload-row">
+                <label for="jsonUpload" class="upload-btn">
+                    <span>📄 Upload JSON</span>
+                    <input type="file" id="jsonUpload" accept=".json" style="display: none;">
+                </label>
+                <label for="playerAudioFile" class="upload-btn">
+                    <span>🎵 Upload Audio</span>
+                    <input type="file" id="playerAudioFile" accept="audio/*" style="display: none;">
+                </label>
+            </div>
+            <div class="song-info-inputs">
+                <input type="text" id="songTitleInput" placeholder="Song Title" class="song-input">
+                <input type="text" id="artistNameInput" placeholder="Artist Name" class="song-input">
+            </div>
+        </div>
+
+        <div class="player-audio-section">
+            <audio id="playerAudio" controls></audio>
+        </div>
+
+        <div class="lyrics-display" id="lyricsDisplay">
+            <div class="lyrics-placeholder">
+                <div style="font-size: 2rem; margin-bottom: 12px;">🎶</div>
+                <div>Upload a JSON file and audio to see synced lyrics</div>
+            </div>
         </div>
     </div>
 

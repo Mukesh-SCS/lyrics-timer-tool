@@ -1,6 +1,6 @@
 {
   "name": "lyrics-capture-tool",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Fast, keyboard-driven lyric timestamping for music players",
   "type": "module",
   "scripts": {
